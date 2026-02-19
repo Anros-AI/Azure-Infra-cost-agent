@@ -1,0 +1,58 @@
+flowchart TD
+    User(["👤 DevOps Engineer\nasks a question"])
+
+    subgraph Agent["🤖 Agent Orchestrator - orchestrator.py"]
+        R1["1 RAG Retrieve\nSearch ChromaDB for\nrelevant KB chunks"]
+        R2["2 Reason\nClaude decides\nwhich tool to call"]
+        R3["3 Act\nExecute the tool\nfetch real data"]
+        R4["4 Generate Answer\nCombine data and KB\ninto plain English"]
+        R5["5 Self Reflect\nScore 0-10\nRetry if below 6"]
+        R1 --> R2 --> R3 --> R4 --> R5
+        R5 -->|"score below 6"| R2
+    end
+
+    subgraph RAG["📚 RAG Pipeline - rag_retriever.py"]
+        KB["8 Azure Cost\nKnowledge Docs"]
+        Embed["Amazon Titan\nEmbeddings V2"]
+        VDB["ChromaDB\nVector Store"]
+        KB --> Embed --> VDB
+    end
+
+    subgraph Tools["🔧 Azure Cost Tools - azure_cost.py"]
+        T1["get_cost_by_service\ncost per service"]
+        T2["get_daily_cost_trend\nanomalies detection"]
+        T3["get_cost_by_resource_group\ncost per team"]
+        T4["suggest_optimisations\nUSD savings tips"]
+    end
+
+    subgraph AWS["☁️ AWS Bedrock"]
+        Claude["Claude 3 Haiku\nReasoning and Answers"]
+        Titan["Titan Embeddings V2\nVector Generation"]
+    end
+
+    subgraph Azure["🔵 Azure"]
+        CostAPI["Cost Management\nREST API"]
+    end
+
+    subgraph Eval["📊 Evaluator - evaluator.py"]
+        TC["8 Test Cases"]
+        Judge["LLM as Judge\n0 to 10 scoring"]
+        Report["eval_results.json"]
+        TC --> Judge --> Report
+    end
+
+    User --> Agent
+    R1 --> VDB
+    VDB --> R2
+    R2 --> AWS
+    R3 --> Tools
+    Tools --> Azure
+    Agent --> User
+    Eval -.-> Agent
+
+    style Agent fill:#1e3a5f,color:#fff
+    style RAG fill:#1a4731,color:#fff
+    style Tools fill:#4a2040,color:#fff
+    style AWS fill:#FF9900,color:#000
+    style Azure fill:#0078d4,color:#fff
+    style Eval fill:#4a3500,color:#fff
