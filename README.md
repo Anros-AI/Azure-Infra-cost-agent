@@ -14,6 +14,8 @@ Ask questions like:
 - Were there any cost spikes in the last 30 days?
 - How can I reduce my Azure infrastructure costs?
 - Break down my spend by resource group
+- What is my daily average spend?
+- Should I switch to Reserved Instances?
 
 ---
 
@@ -28,7 +30,7 @@ SQL costs, anomaly detection, monitoring costs, and tagging strategy.
 These documents are the grounding knowledge that makes the agent
 an expert in Azure FinOps rather than giving generic answers.
 
-### 2. RAG Pipeline — Retrieval Augmented Generation
+### 2. RAG Pipeline - Retrieval Augmented Generation
 When a user asks a question the agent does not just send it to the LLM.
 It first searches the knowledge base for the most relevant sections
 and includes them as context. This grounds the answer in real knowledge.
@@ -53,8 +55,8 @@ tools, and decides the best approach. For optimisation questions it
 automatically chains two tools together without being told to.
 
 Example reasoning:
-- User asks about cost spikes -> agent picks get_daily_cost_trend
-- User asks about savings -> agent picks get_cost_by_service first
+- User asks about cost spikes - agent picks get_daily_cost_trend
+- User asks about savings - agent picks get_cost_by_service first
   then chains suggest_optimisations automatically
 
 ### 4. Tool Calling Mechanisms
@@ -98,7 +100,7 @@ Current evaluation results:
 ### 6. Evaluation Framework
 The agent includes a formal evaluation suite with 8 test cases
 covering all major capabilities. Each test case measures three
-independent dimensions to ensure the agent is truly working:
+independent dimensions:
 
 Tool accuracy: Did the agent pick the correct tool for the question
 Keyword coverage: Does the answer mention expected domain terms
@@ -119,6 +121,13 @@ API keys, tokens, and secrets before they appear in any logs.
 
 Non-root Docker user so the container process runs with minimal
 privileges reducing the blast radius of any security incident.
+
+### 8. Demo Mode
+The agent includes a DEMO_MODE flag that allows anyone to run
+the full application without any AWS or Azure credentials.
+When DEMO_MODE=true the agent uses intelligent mock responses
+that give different answers based on the question type.
+This makes it easy for anyone to evaluate the project locally.
 
 ---
 
@@ -152,7 +161,8 @@ See architecture.mmd for the full diagram.
 - Cost Data: Azure Cost Management REST API
 - UI: Streamlit
 - Container: Docker
-- Security: AWS Secrets Manager plus secure logging
+- Deployment: AWS EC2
+- Security: AWS Secrets Manager plus secure logging plus non-root user
 - Evaluation: LLM as judge plus keyword matching
 
 ---
@@ -161,6 +171,7 @@ See architecture.mmd for the full diagram.
 
 - agent/orchestrator.py — Main agentic loop with 5 step reasoning
 - agent/rag_retriever.py — ChromaDB and Titan Embeddings RAG pipeline
+- agent/config.py — Demo mode and environment configuration
 - agent/secrets_manager.py — AWS Secrets Manager integration
 - agent/secure_logger.py — Secure logging with sensitive data masking
 - tools/azure_cost.py — 4 Azure Cost Management tools
@@ -174,38 +185,62 @@ See architecture.mmd for the full diagram.
 
 ---
 
-## Option 1 - Run with Docker (Recommended)
+## Option 1 - Run with Docker No Credentials Needed (Recommended for Demo)
+
+Anyone can run this with zero AWS or Azure credentials.
 
 Build the image:
 
     docker build -t azure-cost-agent .
 
-Run with environment variables:
+Run in demo mode (no credentials needed):
 
-    docker run -p 8501:8501
-      -e AWS_DEFAULT_REGION=us-east-1
-      -e AWS_ACCESS_KEY_ID=your-access-key
-      -e AWS_SECRET_ACCESS_KEY=your-secret-key
-      -e AZURE_SUBSCRIPTION_ID=your-subscription-id
-      -e AZURE_TENANT_ID=your-tenant-id
-      -e AZURE_CLIENT_ID=your-client-id
-      -e AZURE_CLIENT_SECRET=your-client-secret
-      azure-cost-agent
+    docker run -d -p 8501:8501 -e DEMO_MODE=true --name azure-cost-agent azure-cost-agent
 
-Run with AWS Secrets Manager (recommended for production):
+Open in browser:
 
-    docker run -p 8501:8501
-      -e AWS_DEFAULT_REGION=us-east-1
-      -e AWS_ACCESS_KEY_ID=your-access-key
-      -e AWS_SECRET_ACCESS_KEY=your-secret-key
-      -e SECRETS_MANAGER_SECRET_NAME=azure-cost-agent/azure-credentials
-      azure-cost-agent
-
-Open in browser: http://localhost:8501
+    http://localhost:8501
 
 ---
 
-## Option 2 - Run Locally
+## Option 2 - Run with Real AWS Bedrock and Azure API
+
+Run with environment variables:
+
+    docker run -d -p 8501:8501 -e DEMO_MODE=false -e AWS_DEFAULT_REGION=us-east-1 -e AWS_ACCESS_KEY_ID=your-key -e AWS_SECRET_ACCESS_KEY=your-secret -e AZURE_SUBSCRIPTION_ID=your-sub-id -e AZURE_TENANT_ID=your-tenant -e AZURE_CLIENT_ID=your-client -e AZURE_CLIENT_SECRET=your-secret --name azure-cost-agent azure-cost-agent
+
+Run with AWS Secrets Manager for production:
+
+    docker run -d -p 8501:8501 -e DEMO_MODE=false -e AWS_DEFAULT_REGION=us-east-1 -e AWS_ACCESS_KEY_ID=your-key -e AWS_SECRET_ACCESS_KEY=your-secret -e SECRETS_MANAGER_SECRET_NAME=azure-cost-agent/azure-credentials --name azure-cost-agent azure-cost-agent
+
+---
+
+## Option 3 - Deploy to AWS EC2
+
+Launch an EC2 instance (Ubuntu, t2.micro or t2.small) then:
+
+    sudo apt update -y
+    sudo apt install -y docker.io git
+    sudo systemctl start docker
+    sudo usermod -aG docker ubuntu
+    newgrp docker
+
+Clone and build:
+
+    git clone https://github.com/Anros-AI/Azure-Infra-cost-agent.git
+    cd Azure-Infra-cost-agent
+    docker build -t azure-cost-agent .
+    docker run -d -p 8501:8501 -e DEMO_MODE=true --name azure-cost-agent azure-cost-agent
+
+Open in browser using EC2 public IP:
+
+    http://YOUR_EC2_PUBLIC_IP:8501
+
+Make sure port 8501 is open in your EC2 security group inbound rules.
+
+---
+
+## Option 4 - Run Locally without Docker
 
 Clone and install:
 
@@ -269,12 +304,13 @@ Cost Analysis Agent! The agent connects to Azure Cost Management API,
 uses RAG with ChromaDB and Amazon Titan Embeddings to retrieve cost
 optimisation knowledge, and lets DevOps engineers ask natural language
 questions about their cloud spend. Built with Python and Claude 3 Haiku
-on AWS Bedrock with Docker containerization and AWS Secrets Manager
-for production grade security. The agent detects cost anomalies,
-suggests specific savings with dollar estimates, and self reflects
-on every answer retrying if quality is too low.
+on AWS Bedrock with Docker containerization deployed on AWS EC2 and
+AWS Secrets Manager for production grade security. The agent detects
+cost anomalies, suggests specific savings with dollar estimates, and
+self reflects on every answer retrying if quality is too low. Includes
+a demo mode so anyone can run it without credentials.
 Part of the AI Academy Engineering Track.
-AIAcademy DevOps FinOps AWS GenAI Docker
+AIAcademy DevOps FinOps AWS GenAI Docker EC2
 
 ---
 
