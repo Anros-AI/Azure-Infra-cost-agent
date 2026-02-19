@@ -5,3 +5,5 @@ __pycache__/
 data/chroma_db/
 data/eval_results.json
 .streamlit/
+output.json
+embed_output.json
