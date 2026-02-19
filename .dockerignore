@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+data/chroma_db/
+data/eval_results.json
+output.json
+embed_output.json
+*.md~
+.DS_Store
