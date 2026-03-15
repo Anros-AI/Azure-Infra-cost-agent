@@ -5,7 +5,11 @@ and suggests optimisations using natural language questions.
 
 Built as the final project for the AI Academy Engineering Track.
 
+## Author
+Ananth Roshan
 ---
+
+
 
 ## What It Does
 
@@ -16,6 +20,8 @@ Ask questions like:
 - Break down my spend by resource group
 - What is my daily average spend?
 - Should I switch to Reserved Instances?
+
+
 
 ---
 
@@ -35,6 +41,10 @@ When a user asks a question the agent does not just send it to the LLM.
 It first searches the knowledge base for the most relevant sections
 and includes them as context. This grounds the answer in real knowledge.
 
+
+
+
+
 How it works:
 - Documents are chunked into 500 character pieces with 100 character overlap
 - Each chunk is converted to a vector using Amazon Titan Embeddings V2
@@ -43,9 +53,13 @@ How it works:
 - ChromaDB finds the top 3 most semantically similar chunks
 - Those chunks are sent to Claude along with the question
 
+
+
 Why this matters:
 Without RAG Claude gives generic answers from training data.
 With RAG Claude gives specific answers grounded in your knowledge base.
+
+
 
 ### 3. Autonomous Reasoning
 The agent reasons about which tool to call based on the question
@@ -54,10 +68,14 @@ Claude reads the question, reads the KB context, reads the available
 tools, and decides the best approach. For optimisation questions it
 automatically chains two tools together without being told to.
 
+
+
 Example reasoning:
 - User asks about cost spikes - agent picks get_daily_cost_trend
 - User asks about savings - agent picks get_cost_by_service first
   then chains suggest_optimisations automatically
+
+
 
 ### 4. Tool Calling Mechanisms
 The agent has 4 tools it can call to take real actions:
@@ -80,6 +98,8 @@ suggest_optimisations
   returns specific saving recommendations with estimated USD
   amounts for each service based on Azure best practices.
 
+
+
 ### 5. Self Reflection and Self Correction
 After generating every answer the agent evaluates its own output.
 It scores the answer from 0 to 10 based on four criteria:
@@ -91,6 +111,8 @@ It scores the answer from 0 to 10 based on four criteria:
 If the score is below 6 the agent automatically retries with
 refined reasoning up to 2 times. This self correction loop
 ensures consistently high quality answers without human intervention.
+
+
 
 Current evaluation results:
 - Pass rate: 87.5 percent (7 out of 8 test cases)
@@ -109,6 +131,8 @@ Quality score: An LLM judge independently scores the answer 0 to 10
 All three must pass for a test case to be considered successful.
 Results are saved to data/eval_results.json for review.
 
+
+
 ### 7. Security
 The agent implements production grade security practices:
 
@@ -121,6 +145,8 @@ API keys, tokens, and secrets before they appear in any logs.
 
 Non-root Docker user so the container process runs with minimal
 privileges reducing the blast radius of any security incident.
+
+
 
 ### 8. Demo Mode
 The agent includes a DEMO_MODE flag that allows anyone to run
@@ -153,6 +179,8 @@ See architecture.mmd for the full diagram.
 
 ---
 
+
+
 ## Tech Stack
 
 - LLM: Claude 3 Haiku on AWS Bedrock
@@ -166,6 +194,9 @@ See architecture.mmd for the full diagram.
 - Evaluation: LLM as judge plus keyword matching
 
 ---
+
+
+
 
 ## Project Structure
 
@@ -185,6 +216,8 @@ See architecture.mmd for the full diagram.
 
 ---
 
+
+
 ## Option 1 - Run with Docker No Credentials Needed (Recommended for Demo)
 
 Anyone can run this with zero AWS or Azure credentials.
@@ -203,6 +236,8 @@ Open in browser:
 
 ---
 
+
+
 ## Option 2 - Run with Real AWS Bedrock and Azure API
 
 Run with environment variables:
@@ -214,6 +249,8 @@ Run with AWS Secrets Manager for production:
     docker run -d -p 8501:8501 -e DEMO_MODE=false -e AWS_DEFAULT_REGION=us-east-1 -e AWS_ACCESS_KEY_ID=your-key -e AWS_SECRET_ACCESS_KEY=your-secret -e SECRETS_MANAGER_SECRET_NAME=azure-cost-agent/azure-credentials --name azure-cost-agent azure-cost-agent
 
 ---
+
+
 
 ## Option 3 - Deploy to AWS EC2
 
@@ -239,6 +276,8 @@ Open in browser using EC2 public IP:
 Make sure port 8501 is open in your EC2 security group inbound rules.
 
 ---
+
+
 
 ## Option 4 - Run Locally without Docker
 
@@ -271,6 +310,8 @@ Run evaluation:
     python3 main.py --eval
 
 ---
+
+
 
 ## Evaluation Results
 
