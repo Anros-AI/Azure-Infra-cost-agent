@@ -291,29 +291,6 @@ Run evaluation:
 
 ---
 
-## Demo Video
-
-[Add your demo video link here]
-
----
-
-## LinkedIn Post
-
-Excited to share my AI Academy final project - an Azure Infrastructure
-Cost Analysis Agent! The agent connects to Azure Cost Management API,
-uses RAG with ChromaDB and Amazon Titan Embeddings to retrieve cost
-optimisation knowledge, and lets DevOps engineers ask natural language
-questions about their cloud spend. Built with Python and Claude 3 Haiku
-on AWS Bedrock with Docker containerization deployed on AWS EC2 and
-AWS Secrets Manager for production grade security. The agent detects
-cost anomalies, suggests specific savings with dollar estimates, and
-self reflects on every answer retrying if quality is too low. Includes
-a demo mode so anyone can run it without credentials.
-Part of the AI Academy Engineering Track.
-AIAcademy DevOps FinOps AWS GenAI Docker EC2
-
----
-
 ## Acknowledgements
 
 Final capstone project for the AI Academy Engineering Track.
